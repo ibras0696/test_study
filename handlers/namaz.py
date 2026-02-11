@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-@router.message(Command('time'))
+@router.message(Command('namaz'))
 async def time_command(message: Message):
 
     logger.info(f"Пользователь {message.from_user.id} запросил время намаза")
@@ -21,11 +21,12 @@ async def time_command(message: Message):
         await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
         prayer_times_text = get_times()
-
-        logger.info(f"Текст для отправки: {prayer_times_text[:50]}...")
+        prayer_times_dict = ""
+        for prayer, time in prayer_times_text.items():
+            prayer_times_dict += f"🕌 *{prayer}*: {time}\n"
 
         await message.answer(
-            prayer_times_text,
+            prayer_times_dict,
             parse_mode="Markdown"
         )
 
@@ -35,9 +36,3 @@ async def time_command(message: Message):
         error_msg = f"Ошибка в боте: {str(e)}"
         logger.error(error_msg)
         await message.answer(error_msg)
-
-
-
-@router.message(Command('namaz'))
-async def namaz_command(message: Message):
-    await time_command(message)
