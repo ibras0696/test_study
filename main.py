@@ -11,6 +11,7 @@ dp = Dispatcher()
 
 async def main():
     dp.include_router(router)
+    print(1)
     await dp.start_polling(bot)
 
 
