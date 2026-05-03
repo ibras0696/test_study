@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine
 )
 
-from app.core.models import Base
+from core.models import Base
 
 DATABASE_URL = "sqlite+aiosqlite:///./data.db"
 
