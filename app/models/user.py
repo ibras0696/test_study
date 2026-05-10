@@ -67,11 +67,11 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
-    # profile: Mapped[Optional["UserProfile"]] = relationship(
-    #     back_populates="user",
-    #     uselist=False,  # 🔑 говорит ORM что это 1:1
-    #     cascade="all, delete-orphan",
-    # )
+    profile: Mapped[Optional["UserProfile"]] = relationship(
+        back_populates="user",
+        uselist=False,  # 🔑 говорит ORM что это 1:1
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"User(id={self.id}, username={self.username!r})"

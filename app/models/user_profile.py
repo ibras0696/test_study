@@ -22,9 +22,9 @@ class UserProfile(Base):
     bio: Mapped[Optional[str]] = mapped_column(String(255))
     avatar_url: Mapped[Optional[str]] = mapped_column(String(255))
 
-    # user: Mapped["User"] = relationship(
-    #     back_populates="profile",
-    # )
+    user: Mapped["User"] = relationship(
+        back_populates="profile",
+    )
 
     def __repr__(self):
         return f"id={self.id} user_id={self.user_id} bio:{self.bio} avatar_url: {self.avatar_url}"

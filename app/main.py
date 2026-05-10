@@ -5,6 +5,9 @@ from core.db import AsyncSessionLocal
 from crud import post
 from crud import user_profile
 from crud import user
+from crud import tst
+from crud import tst_data
+ 
 
 import models  # Важно: импортируем модели, чтобы metadata их увидела
 
@@ -16,7 +19,11 @@ async def main() -> None:
         # print(user_new)
         # profile = await user_profile.create_profile(session, 1, "Что то обомне ", "https://crm.py-it.ru")
         # print(profile)
-
+        from pprint import pprint as p
+        r1 = await tst_data.seed_test_data(session=session)
+        r2 = await tst.get_users_profiles_posts(session=session)
+        p(r2)
+        # print(r2)
         print('-' * 100)
 
     # user_1 = await user.get_user_by_id(session, 1)
