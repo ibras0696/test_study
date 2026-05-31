@@ -1,9 +1,12 @@
+from typing import Annotated, AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from fastapi import Depends
 
 from config import settings
  
@@ -23,12 +26,11 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-
 class Base(DeclarativeBase):
     pass
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Используй через Depends(get_db) в роутах.
     Сессия открывается и закрывается на каждый запрос.
@@ -37,3 +39,5 @@ async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
 
+
+DB_DEPS = Annotated[AsyncSession, Depends(get_db)]

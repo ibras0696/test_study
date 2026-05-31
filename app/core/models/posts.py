@@ -5,8 +5,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core import Base
 
-from core.models.user import User
-
 
 class Post(Base):
     __tablename__ = "posts"

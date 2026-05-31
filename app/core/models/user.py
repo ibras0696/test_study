@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text, func
+from sqlalchemy import String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core import Base
-from core.models.posts import Post
 
 
 class User(Base):
@@ -35,4 +34,3 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email!r}>"
-
