@@ -34,7 +34,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Используй через Depends(get_db) в роутах.
     Сессия открывается и закрывается на каждый запрос.
-    Commit делается вручную в роуте — явно лучше неявного.
+    Commit обычно делается на уровне service.
     """
     async with AsyncSessionLocal() as session:
         yield session
