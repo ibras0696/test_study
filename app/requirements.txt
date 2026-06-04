@@ -24,6 +24,6 @@ starlette==1.0.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.46.0
+uvloop==0.22.1; platform_system != "Windows"
 watchfiles==1.1.1
 websockets==16.0
-uvloop==0.22.1; platform_system != "Windows"

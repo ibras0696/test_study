@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-from .profile import router as profile
+from .posts import router as posts
 from .users import router as users
 
 router = APIRouter(prefix="/api")
 
-router.include_router(profile)
+router.include_router(posts)
 router.include_router(users)
