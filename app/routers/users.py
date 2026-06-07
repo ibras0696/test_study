@@ -64,7 +64,7 @@ async def delete_user(user_id: int):
 
 @router.patch("/{user_id}", status_code=status.HTTP_200_OK)
 async def update_user(user_id: int, payload: dict, new_email):
-    pass
+
 
 
 

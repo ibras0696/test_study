@@ -4,12 +4,16 @@ from core.models.user import User
 
 
 
-class User:
+
+class UserRepo:
     def __init__(self,session:AsyncSession):
         self.session=session
 
 
-        async def create(
+
+
+
+    async def create(
         self,
         user_id: int,
         name: str,
@@ -20,16 +24,15 @@ class User:
          self.session.add(user)
          self.session.flush()
          return user
-
-
-
+    
     async def get_user_by_id(self,user_id:int):
-        user=self.session.select(User).where(User.id==user_id)
+        user=await self.session.execute(select(User).where(User.id==user_id))
         return user.scalar_one_or_none()
 
 
+
     async def update_email(self, user_id:int, new_email:str):
-        user=await get_user_by_id(id)
+        user=await self.get_user_by_id(id)
 
         if user == None:
             return None
@@ -38,11 +41,22 @@ class User:
         self.session.flush()
         return user
 
-    async def update_password(self,user_id:id,new_password:str):
-        user=await get_user_by_id(user_id)
-        if user == None:
+    async def update_password(self,user_id:int,new_password:str):
+        user=await self.get_user_by_id(user_id)
+        if user is None:
             return None
 
         User.hashed_password=new_password
         self.session.flush()
         return user
+    
+    
+    async def delete_user(self,id:int):
+        user=self.session.get(User,id)
+        if user is None:
+            return None
+        
+        self.session.delete(user)
+        return True
+
+                
