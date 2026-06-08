@@ -1,0 +1,17 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\SKYNET\\lesson_fast\\pythonProject1\\test_study\\app']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [16148] using WatchFiles
+INFO:     Started server process [27044]
+INFO:     Waiting for application startup.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [sqlalchemy.engine.Engine] PRAGMA main.table_info("alembic_version")
+INFO  [sqlalchemy.engine.Engine] [raw sql] ()
+INFO  [sqlalchemy.engine.Engine] SELECT alembic_version.version_num 
+FROM alembic_version
+INFO  [sqlalchemy.engine.Engine] [generated in 0.00047s] ()
+INFO  [sqlalchemy.engine.Engine] COMMIT
+INFO  [sqlalchemy.engine.Engine] BEGIN (implicit)
+INFO  [sqlalchemy.engine.Engine] INSERT INTO users (name, email, hashed_password, is_active, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id, created_at
+INFO  [sqlalchemy.engine.Engine] [generated in 0.11043s] ('islam', 'islamhucaev@gmail.com', 'Nowieconr', 1, None)
+INFO  [sqlalchemy.engine.Engine] COMMIT
