@@ -10,13 +10,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 # Получить все посты
-@router.get(
-    "/", 
-    status_code=status.HTTP_200_OK, 
-    response_model=list[PostRead]
-)
-async def get_posts(
-    service: PostService = Depends(get_post_service)) -> list[PostRead]:
+@router.get("/", status_code=status.HTTP_200_OK, response_model=list[PostRead])
+
+async def get_posts(service: PostService = Depends(get_post_service)) -> list[PostRead]:
     posts = await service.get_posts()
     return posts
 
