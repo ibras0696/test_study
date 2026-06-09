@@ -14,9 +14,15 @@ class PostService:
         post = await self.repo.create(user_id=user_id, title=title, body=body)
         await self.repo.session.commit()
         return post
-
+    
+    
+    async def get_post_by_id(self, post_id: int) -> Post | None:
+        return await self.repo.get_post_by_id(post_id=post_id)
+    
+    
     async def get_posts(self) -> list[Post]:
         return await self.repo.get_posts()
+
 
     async def get_posts_by_user(self, user_id: int) -> list[Post]:
         return await self.repo.get_posts_by_user(user_id=user_id)

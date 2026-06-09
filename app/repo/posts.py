@@ -15,6 +15,11 @@ class PostRepo:
         # await self.session.commit()
         return post
 
+    async def get_post_by_id(self, post_id: int) -> Post | None:
+        stmt = select(Post).where(Post.id == post_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+    
     async def get_posts(self) -> list[Post]:
         stmt = select(Post)
         result = await self.session.execute(stmt)
