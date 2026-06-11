@@ -1,9 +1,9 @@
 from core.models.user import User
-from repo.users import RepoUser
+from repo.users import UserRepo
 
 
 class UserServise:
-    def __init__(self, repo: RepoUser):
+    def __init__(self, repo: UserRepo):
         self.repo = repo
 
     async def create_user(
@@ -85,5 +85,4 @@ class UserServise:
 
         await self.repo.session.commit()
         return True
-
 
