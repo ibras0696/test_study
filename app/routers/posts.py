@@ -10,8 +10,11 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 # Получить все посты
-@router.get("/", status_code=status.HTTP_200_OK, response_model=list[PostRead])
-
+@router.get(
+    "/", 
+    status_code=status.HTTP_200_OK, 
+    response_model=list[PostRead]
+)
 async def get_posts(service: PostService = Depends(get_post_service)) -> list[PostRead]:
     posts = await service.get_posts()
     return posts
@@ -48,6 +51,7 @@ async def get_post_by_id(
         raise HTTPException(status_code=404, detail="post not found")
     return post
 
+
 # Добавить пост
 @router.post(
     "/", 
@@ -58,22 +62,54 @@ async def create_post(
     payload: PostCreate,
     service: PostService = Depends(get_post_service)
 ) -> PostRead:
-    post = await service.create_post(
-        user_id=payload.user_id,
-        title=payload.title,
-        body=payload.body
-        )
-    return post
-    
+    try:
+        post = await service.create_post(
+            user_id=payload.user_id,
+            title=payload.title,
+            body=payload.body
+            )
+        return post
+    except ValueError as s:
+        if str(s) == "user not found":
+            raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=400, detail=f"{str(s)}")
 
 
 # Обновить пост данные
-@router.patch("/{post_id}", status_code=status.HTTP_200_OK, response_model=PostRead)
-async def update_post(post_id: int, payload: PostUpdate):
-    pass
+@router.patch(
+    "/{post_id}", 
+    status_code=status.HTTP_200_OK, 
+    response_model=PostRead
+)
+async def update_post(
+    post_id: int, 
+    payload: PostUpdate,
+    service: PostService = Depends(get_post_service)
+) -> PostRead | None:
+    try:
+        post = await service.update_post(
+            post_id=post_id,
+            title=payload.title,
+            body=payload.body
+        )
+        print(post)
+        if post is None:
+            raise HTTPException(status_code=404, detail="post not found")
+        return post
+    except TypeError as t:
+        raise HTTPException(status_code=400, detail="not validate: {t}")
 
 
 # Удалить пост
-@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def post_delete(post_id: int):
-    pass
+@router.delete(
+    "/{post_id}", 
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def post_delete(
+    post_id: int,
+    service: PostService = Depends(get_post_service)
+) -> None:
+    post = await service.delete_post(post_id=post_id)
+    if post is False:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
