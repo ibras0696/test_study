@@ -1,32 +1,76 @@
 
-# buble sort
-def bble_sort(lst):
-    
-    total = len(lst)
-    for i in range(total):
-        for j in range(0, total - i - 1):
-            if lst[j] > lst[j+1]:
-                lst[j], lst[j+1] = lst[j+1], lst[j]
-                
-    
-    return lst
 
-
-l = [4, 2, 3, 1]
-print(bble_sort(l))
-
-def quick_sort(arr):
+t = 0
+def quic_sort(lst: list) -> list:
+    global t
+    t += 1
+    if len(lst) <= 1:
+        return lst
     
-    if len(arr) <= 1:
-        return arr
+    pivot = lst[len(lst) // 2]
     
-    pivot = arr[len(arr) // 2]
-    left = [x for x in arr if x < pivot] 
-    middle = [x for x in arr if x == pivot]
-    right = [x for x in arr if x > pivot]
-    return quick_sort(left) + middle + quick_sort(right)
+    left = []
+    middle = []
+    right = []
+    for i in lst:
+        if i < pivot:
+            left.append(i)
+        elif i == pivot:
+            middle.append(i)
+        else:
+            right.append(i)
+            
+    return quic_sort(left) + middle + quic_sort(right)
     
 
+l = [12, 323, 1, 2, 5, 432, 332, 1, 2, 424]
+r = quic_sort(l)
+print(t)
+print(r)
 
-l2 = [4, 2, 5, 6, 1, 3, 4]
-print(quick_sort(l2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def buble_sort(lst: list):
+    
+#     total = len(lst)
+#     t = 0
+#     for i in range(total):
+#         stop = False
+#         for j in range(total - i - 1):
+            
+#             if lst[j] > lst[j+1]:
+#                 lst[j], lst[j+1] = lst[j+1], lst[j]
+#                 t += 1
+#                 # stop = True
+            
+            
+#         # if stop is False:
+#         #     break
+#     print(t)
+#     return lst
+            
+            
+    
+# l = [2, 4, 1, 2, 4, 2, 6, 3, 4, 2, 8, 2, 4, 90, 43]
+# rv = buble_sort(l)
+# print(rv)
