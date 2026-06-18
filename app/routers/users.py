@@ -38,18 +38,18 @@ async def get_user_by_id(
     return user
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(
-    payload: UserCreate,
-    service: UserServise = Depends(get_user_service),
-):
-    user = await service.create_user(
-        name=payload.name,
-        email=payload.email,
-        hashed_password=payload.hashed_password,
-    )
+# @router.post("/", status_code=status.HTTP_201_CREATED)
+# async def create_user(
+#     payload: UserCreate,
+#     service: UserServise = Depends(get_user_service),
+# ):
+#     user = await service.create_user(
+#         name=payload.name,
+#         email=payload.email,
+#         hashed_password=payload.hashed_password,
+#     )
 
-    return user
+#     return user
 
 
 @router.patch("/{user_id}/name", status_code=status.HTTP_200_OK)

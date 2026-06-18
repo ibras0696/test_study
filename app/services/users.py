@@ -1,4 +1,5 @@
 from core.models.user import User
+from core.security import hash_password
 from repo.users import UserRepo
 
 
@@ -36,6 +37,11 @@ class UserServise:
 
         return await self.repo.get_user_by_id(id=user_id)
 
+    async def get_user_by_email(self, email: str) -> User | None:
+        if not isinstance(email, str) or not email.strip():
+            raise ValueError("email is empty")
+        return await self.repo.get_user_by_email(email=email)
+    
     async def update_email(self, user_id: int, new_email: str) -> User | None:
         if not isinstance(user_id, int):
             raise TypeError("user_id is int")
@@ -68,7 +74,10 @@ class UserServise:
         if not isinstance(new_password, str) or not new_password.strip():
             raise ValueError("new_password is empty")
 
-        user = await self.repo.update_password(id=user_id, new_password=new_password)
+        user = await self.repo.update_password(
+            id=user_id,
+            new_password=hash_password(new_password),
+        )
         if user is None:
             return None
 
@@ -85,4 +94,3 @@ class UserServise:
 
         await self.repo.session.commit()
         return True
-
