@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
-from jose import JWTError
 from starlette import status
 
 from core.auth_cookies import clear_auth_cookies, set_auth_cookies
 from core.deps import get_auth_service, get_current_user
-from core.security import decode_token
 from core.models.user import User
 from schemas.auth import AuthStatus, LoginRequest, RegisterRequest
 from schemas.users import UserRead
@@ -64,20 +62,11 @@ async def refresh(
         )
 
     try:
-        payload = decode_token(refresh_token, expected_type="refresh")
-        user_id = int(payload["sub"])
-    except (JWTError, KeyError, ValueError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid refresh token",
-        )
-
-    try:
-        tokens = await service.refresh(user_id=user_id)
+        tokens = await service.refresh(refresh_token=refresh_token)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="user not found",
+            detail="invalid refresh token",
         )
 
     set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
@@ -86,7 +75,12 @@ async def refresh(
 
 
 @router.post("/logout", response_model=AuthStatus)
-async def logout(response: Response) -> AuthStatus:
+async def logout(
+    response: Response,
+    refresh_token: str | None = Cookie(default=None),
+    service: AuthService = Depends(get_auth_service),
+) -> AuthStatus:
+    await service.logout(refresh_token=refresh_token)
     clear_auth_cookies(response)
     return AuthStatus(status="ok")
 

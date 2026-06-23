@@ -6,6 +6,7 @@ from config import settings
 # Имена cookies, в которых клиент будет хранить access и refresh токены.
 ACCESS_COOKIE_NAME = "access_token"
 REFRESH_COOKIE_NAME = "refresh_token"
+REFRESH_COOKIE_PATH = "/api/auth"
 
 
 def set_auth_cookies(
@@ -37,7 +38,7 @@ def set_auth_cookies(
         httponly=True,
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
-        path="/auth",  # refresh cookie отправляется только на /auth/*
+        path=REFRESH_COOKIE_PATH,  # refresh cookie отправляется только на auth endpoints
     )
 
 
@@ -56,5 +57,5 @@ def clear_auth_cookies(response: Response) -> None:
 
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
-        path="/auth",
+        path=REFRESH_COOKIE_PATH,
     )

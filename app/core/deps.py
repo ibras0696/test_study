@@ -10,6 +10,7 @@ from core.auth_cookies import ACCESS_COOKIE_NAME
 from core.db import get_db
 from core.models.user import User
 from core.security import decode_token
+from repo.auth import AuthRepo
 from repo.posts import PostRepo
 from repo.users import UserRepo
 from services.auth import AuthService
@@ -28,7 +29,7 @@ def get_user_service(session: AsyncSession = Depends(get_db)) -> UserServise:
 
 
 def get_auth_service(session: AsyncSession = Depends(get_db)) -> AuthService:
-    return AuthService(UserRepo(session))
+    return AuthService(UserRepo(session), AuthRepo(session))
 
 
 async def get_current_user(

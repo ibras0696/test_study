@@ -17,7 +17,7 @@ MarkupSafe==3.0.3
 pydantic==2.13.3
 pydantic-settings==2.14.1
 pydantic_core==2.46.3
-passlib[bcrypt]
+bcrypt==5.0.0
 python-jose[cryptography]
 python-dotenv==1.2.2
 PyYAML==6.0.3
