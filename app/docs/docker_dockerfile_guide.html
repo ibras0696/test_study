@@ -1,0 +1,1433 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docker и Dockerfile: понятный конспект</title>
+  <style>
+    :root {
+      --ink: #edf7ff;
+      --muted: #91a3b7;
+      --paper: #070a0f;
+      --panel: #101620;
+      --panel-2: #141d2a;
+      --line: #263244;
+      --docker: #19a7f8;
+      --docker-dark: #7dd3fc;
+      --teal: #2dd4bf;
+      --yellow: #f7c948;
+      --red: #fb923c;
+      --green: #4ade80;
+      --code-bg: #05070b;
+      --code-ink: #dcecff;
+      --soft-blue: rgba(25, 167, 248, 0.13);
+      --soft-teal: rgba(45, 212, 191, 0.13);
+      --soft-yellow: rgba(247, 201, 72, 0.14);
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+      --radius: 8px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 78% 8%, rgba(25, 167, 248, 0.18), transparent 26%),
+        radial-gradient(circle at 12% 28%, rgba(45, 212, 191, 0.10), transparent 24%),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.045) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(125, 211, 252, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 44px 44px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--docker-dark);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .side {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 22px;
+      background: rgba(9, 13, 20, 0.88);
+      border-right: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--docker), var(--teal));
+      box-shadow: 0 10px 30px rgba(25, 167, 248, 0.25);
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .nav-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 24px 0 10px;
+    }
+
+    .side nav {
+      display: grid;
+      gap: 4px;
+    }
+
+    .side a {
+      display: block;
+      padding: 9px 10px;
+      border-radius: 7px;
+      color: #cbd8e8;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .side a:hover {
+      background: var(--soft-blue);
+      color: #ffffff;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 56px 36px 34px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 88% 14%, rgba(247, 201, 72, 0.30), transparent 23%),
+        linear-gradient(135deg, #05070b 0%, #0b1b2a 42%, #082f35 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
+      gap: 34px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      max-width: 820px;
+      font-size: clamp(34px, 6vw, 76px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(17px, 2vw, 22px);
+      color: rgba(255, 255, 255, 0.90);
+    }
+
+    .hero-card {
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: var(--radius);
+      background: rgba(5, 7, 11, 0.72);
+      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.42);
+      overflow: hidden;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(5, 14, 26, 0.32);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #ff6b6b;
+    }
+
+    .dot:nth-child(2) {
+      background: #ffd166;
+    }
+
+    .dot:nth-child(3) {
+      background: #06d6a0;
+    }
+
+    .terminal {
+      margin: 0;
+      padding: 18px;
+      color: #eaf6ff;
+      font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 34px 36px 72px;
+    }
+
+    section {
+      margin-top: 34px;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(16, 22, 32, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: clamp(26px, 3vw, 38px);
+      line-height: 1.1;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 21px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: var(--panel-2);
+    }
+
+    .card h3,
+    .card h4 {
+      margin-top: 0;
+    }
+
+    .icon {
+      width: 34px;
+      height: 34px;
+      display: inline-grid;
+      place-items: center;
+      margin-bottom: 12px;
+      border-radius: 7px;
+      color: var(--docker-dark);
+      background: var(--soft-blue);
+    }
+
+    .icon svg {
+      width: 21px;
+      height: 21px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #0d131d;
+      color: #d5e3f3;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    code,
+    kbd {
+      border-radius: 5px;
+      padding: 2px 6px;
+      background: #0b111a;
+      color: #a5e3ff;
+      border: 1px solid #223047;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      border-radius: var(--radius);
+      background: var(--code-bg);
+      color: var(--code-ink);
+      overflow: auto;
+      border: 1px solid #25334a;
+    }
+
+    pre code {
+      display: block;
+      padding: 18px;
+      background: transparent;
+      color: inherit;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #d9e7f8;
+      background: #0c121b;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      padding: 16px;
+      min-height: 128px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #141d2a, #0f1621);
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--docker-dark);
+    }
+
+    .step small {
+      color: var(--muted);
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      width: 10px;
+      height: 2px;
+      background: var(--docker);
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .layers {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 20px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .layer {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-2);
+    }
+
+    .layer b {
+      display: inline-block;
+      color: #031019;
+      background: var(--docker-dark);
+      border-radius: 5px;
+      padding: 5px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .callout {
+      border-left: 5px solid var(--docker);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      background: var(--soft-blue);
+    }
+
+    .callout.warn {
+      border-left-color: var(--yellow);
+      background: var(--soft-yellow);
+    }
+
+    .callout.good {
+      border-left-color: var(--teal);
+      background: var(--soft-teal);
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .bad {
+      border-color: rgba(251, 146, 60, 0.42);
+      background: rgba(251, 146, 60, 0.10);
+    }
+
+    .good-card {
+      border-color: rgba(45, 212, 191, 0.42);
+      background: rgba(45, 212, 191, 0.10);
+    }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .label.bad-label {
+      color: #fed7aa;
+      background: rgba(251, 146, 60, 0.18);
+    }
+
+    .label.good-label {
+      color: #99f6e4;
+      background: rgba(45, 212, 191, 0.18);
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-2);
+    }
+
+    .check b {
+      color: var(--green);
+      font-size: 18px;
+    }
+
+    .mini-title {
+      margin: 0 0 4px;
+      font-weight: 800;
+    }
+
+    .footer {
+      margin-top: 28px;
+      padding: 22px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: linear-gradient(135deg, #0b111a, #10263d);
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        display: block;
+      }
+
+      .side {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .side nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-inner,
+      .grid,
+      .grid.two,
+      .layers,
+      .compare,
+      .checklist {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .step::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .hero,
+      .wrap {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      section {
+        padding: 20px;
+      }
+
+      .side nav {
+        grid-template-columns: 1fr;
+      }
+
+      .layer {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="side">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 15h18l-2 5H5l-2-5Z"></path>
+            <path d="M7 15V9h4v6"></path>
+            <path d="M11 15V6h4v9"></path>
+            <path d="M15 15v-4h4v4"></path>
+          </svg>
+        </div>
+        <div>
+          <strong>Docker</strong>
+          <span>конспект по Dockerfile</span>
+        </div>
+      </div>
+
+      <div class="nav-title">Навигация</div>
+      <nav>
+        <a href="#what">Что такое Docker</a>
+        <a href="#mental-model">Модель мышления</a>
+        <a href="#dockerfile">Dockerfile</a>
+        <a href="#instructions">Инструкции</a>
+        <a href="#cache">Слои и кэш</a>
+        <a href="#examples">Примеры</a>
+        <a href="#commands">Docker CLI</a>
+        <a href="#volumes-networks">Тома и сети</a>
+        <a href="#compose">Compose</a>
+        <a href="#compose-syntax">Синтаксис Compose</a>
+        <a href="#compose-commands">Compose CLI</a>
+        <a href="#security">Безопасность</a>
+        <a href="#checklist">Чеклист</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <div class="hero-inner">
+          <div>
+            <div class="eyebrow">Контейнеры без магии</div>
+            <h1>Docker и синтаксис Dockerfile</h1>
+            <p class="lead">Один файл с понятной картиной: что такое образ, контейнер, слой, кэш, Dockerfile, Compose и какие правила делают сборку быстрой, маленькой и безопасной.</p>
+          </div>
+
+          <div class="hero-card" aria-label="Пример Dockerfile">
+            <div class="terminal-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <pre class="terminal">FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]</pre>
+          </div>
+        </div>
+      </header>
+
+      <div class="wrap">
+        <section id="what">
+          <h2>1. Что такое Docker</h2>
+          <p>Docker упаковывает приложение вместе с его окружением: Python/Node/Java, системные пакеты, зависимости, переменные, рабочую директорию и команду запуска. Идея простая: приложение должно запускаться одинаково на твоем ноутбуке, сервере и в CI.</p>
+
+          <div class="grid">
+            <article class="card">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8l9 5 9-5Z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>
+              </div>
+              <h3>Image</h3>
+              <p>Образ. Это шаблон приложения: файловая система плюс инструкция, как запускаться. Образ неизменяемый.</p>
+            </article>
+
+            <article class="card">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
+              </div>
+              <h3>Container</h3>
+              <p>Контейнер. Это запущенный экземпляр образа. Один образ можно запустить много раз.</p>
+            </article>
+
+            <article class="card">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 18h16"></path><path d="M6 14h12"></path><path d="M8 10h8"></path><path d="M10 6h4"></path></svg>
+              </div>
+              <h3>Layer</h3>
+              <p>Слой. Каждая важная инструкция Dockerfile добавляет слой. Слои кэшируются и переиспользуются.</p>
+            </article>
+          </div>
+
+          <div class="callout good" style="margin-top:18px">
+            <strong>Главная мысль:</strong> Docker не заменяет приложение. Он фиксирует окружение вокруг приложения, чтобы запуск был воспроизводимым.
+          </div>
+        </section>
+
+        <section id="mental-model">
+          <h2>2. Модель мышления</h2>
+          <p>Dockerfile читается сверху вниз. Docker выполняет инструкции, получает слои и собирает образ. Потом из образа запускается контейнер.</p>
+
+          <div class="flow" aria-label="Поток Docker">
+            <div class="step"><strong>Dockerfile</strong><small>текстовый рецепт сборки</small></div>
+            <div class="step"><strong>docker build</strong><small>исполняет рецепт по шагам</small></div>
+            <div class="step"><strong>Image</strong><small>готовый образ приложения</small></div>
+            <div class="step"><strong>docker run</strong><small>запускает образ</small></div>
+            <div class="step"><strong>Container</strong><small>живой процесс приложения</small></div>
+          </div>
+
+          <h3>Что важно не путать</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Понятие</th>
+                  <th>Что это</th>
+                  <th>Пример</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Dockerfile</code></td>
+                  <td>Инструкция сборки образа.</td>
+                  <td><code>FROM python:3.12-slim</code></td>
+                </tr>
+                <tr>
+                  <td><code>image</code></td>
+                  <td>Готовый шаблон с файлами и настройками.</td>
+                  <td><code>my-api:1.0</code></td>
+                </tr>
+                <tr>
+                  <td><code>container</code></td>
+                  <td>Запущенное приложение на основе образа.</td>
+                  <td><code>docker run my-api:1.0</code></td>
+                </tr>
+                <tr>
+                  <td><code>volume</code></td>
+                  <td>Постоянное хранилище данных вне контейнера.</td>
+                  <td>данные PostgreSQL</td>
+                </tr>
+                <tr>
+                  <td><code>network</code></td>
+                  <td>Сеть, через которую контейнеры общаются.</td>
+                  <td>API подключается к DB по имени <code>db</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="dockerfile">
+          <h2>3. Dockerfile: базовый синтаксис</h2>
+          <p>Dockerfile обычно лежит в корне проекта и называется именно <code>Dockerfile</code>. В нем нет расширения. Инструкции пишутся в верхнем регистре по соглашению, хотя Docker понимает и нижний.</p>
+
+          <pre><code># Комментарий
+INSTRUCTION arguments
+
+# Пример
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "main.py"]</code></pre>
+
+          <div class="grid two">
+            <div class="card">
+              <h3>Exec form</h3>
+              <p>Рекомендуемый формат для <code>CMD</code> и <code>ENTRYPOINT</code>. Команда передается как JSON-массив.</p>
+              <pre><code>CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]</code></pre>
+            </div>
+            <div class="card">
+              <h3>Shell form</h3>
+              <p>Команда запускается через shell. Иногда удобно, но хуже для сигналов и остановки процесса.</p>
+              <pre><code>CMD uvicorn main:app --host 0.0.0.0</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="instructions">
+          <h2>4. Основные инструкции Dockerfile</h2>
+          <p>Ниже самые важные инструкции. Если их понимать, большая часть Dockerfile становится читаемой.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Инструкция</th>
+                  <th>Что делает</th>
+                  <th>Пример</th>
+                  <th>Практический смысл</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>FROM</code></td>
+                  <td>Выбирает базовый образ.</td>
+                  <td><code>FROM python:3.12-slim</code></td>
+                  <td>С этого начинается почти каждый Dockerfile.</td>
+                </tr>
+                <tr>
+                  <td><code>WORKDIR</code></td>
+                  <td>Задает рабочую директорию внутри контейнера.</td>
+                  <td><code>WORKDIR /app</code></td>
+                  <td>После этого команды выполняются из <code>/app</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>COPY</code></td>
+                  <td>Копирует файлы с хоста в образ.</td>
+                  <td><code>COPY . .</code></td>
+                  <td>Добавляет код приложения в образ.</td>
+                </tr>
+                <tr>
+                  <td><code>ADD</code></td>
+                  <td>Похожа на <code>COPY</code>, но умеет URL и распаковку архивов.</td>
+                  <td><code>ADD app.tar.gz /app</code></td>
+                  <td>Используй редко. Для обычных файлов лучше <code>COPY</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>RUN</code></td>
+                  <td>Выполняет команду во время сборки образа.</td>
+                  <td><code>RUN pip install -r requirements.txt</code></td>
+                  <td>Установка зависимостей, системных пакетов, сборка проекта.</td>
+                </tr>
+                <tr>
+                  <td><code>CMD</code></td>
+                  <td>Команда по умолчанию при запуске контейнера.</td>
+                  <td><code>CMD ["python", "main.py"]</code></td>
+                  <td>Можно переопределить через <code>docker run image другой-командой</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>ENTRYPOINT</code></td>
+                  <td>Фиксированная команда запуска.</td>
+                  <td><code>ENTRYPOINT ["python"]</code></td>
+                  <td>Часто используют для CLI-образов.</td>
+                </tr>
+                <tr>
+                  <td><code>ENV</code></td>
+                  <td>Задает переменную окружения.</td>
+                  <td><code>ENV PYTHONUNBUFFERED=1</code></td>
+                  <td>Доступна во время сборки и запуска.</td>
+                </tr>
+                <tr>
+                  <td><code>ARG</code></td>
+                  <td>Переменная только для сборки.</td>
+                  <td><code>ARG APP_VERSION=dev</code></td>
+                  <td>Передается через <code>--build-arg</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>EXPOSE</code></td>
+                  <td>Документирует порт приложения.</td>
+                  <td><code>EXPOSE 8000</code></td>
+                  <td>Не публикует порт сам. Для публикации нужен <code>-p</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>USER</code></td>
+                  <td>Меняет пользователя внутри контейнера.</td>
+                  <td><code>USER app</code></td>
+                  <td>Для продакшена лучше не запускаться от root.</td>
+                </tr>
+                <tr>
+                  <td><code>HEALTHCHECK</code></td>
+                  <td>Проверяет, живо ли приложение.</td>
+                  <td><code>HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1</code></td>
+                  <td>Оркестратор видит не только процесс, но и здоровье сервиса.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="cache">
+          <h2>5. Слои и кэш сборки</h2>
+          <p>Docker кэширует каждый шаг. Если инструкция и файлы для нее не изменились, Docker берет старый слой из кэша. Поэтому порядок инструкций сильно влияет на скорость сборки.</p>
+
+          <div class="layers">
+            <div>
+              <div class="stack">
+                <div class="layer"><b>FROM</b><span>Базовая система и runtime.</span></div>
+                <div class="layer"><b>COPY deps</b><span>Файлы зависимостей: <code>requirements.txt</code>, <code>package.json</code>.</span></div>
+                <div class="layer"><b>RUN install</b><span>Установка зависимостей. Этот слой дорогой, его важно кэшировать.</span></div>
+                <div class="layer"><b>COPY src</b><span>Код приложения. Меняется чаще всего.</span></div>
+                <div class="layer"><b>CMD</b><span>Команда запуска контейнера.</span></div>
+              </div>
+            </div>
+
+            <div class="callout">
+              <strong>Правило кэша:</strong>
+              <p style="margin-top:8px">Сначала копируй то, что меняется редко. Потом ставь зависимости. Только после этого копируй весь код.</p>
+            </div>
+          </div>
+
+          <div class="compare">
+            <div class="card bad">
+              <span class="label bad-label">Плохо</span>
+              <pre><code>FROM python:3.12-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "main.py"]</code></pre>
+              <p class="muted">Любое изменение кода ломает кэш перед установкой зависимостей.</p>
+            </div>
+            <div class="card good-card">
+              <span class="label good-label">Лучше</span>
+              <pre><code>FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "main.py"]</code></pre>
+              <p class="muted">Зависимости переустанавливаются только если изменился <code>requirements.txt</code>.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="examples">
+          <h2>6. Готовые примеры Dockerfile</h2>
+
+          <h3>FastAPI-приложение</h3>
+          <pre><code>FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+
+          <h3>Python с non-root пользователем</h3>
+          <pre><code>FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=app:app . .
+
+USER app
+
+CMD ["python", "main.py"]</code></pre>
+
+          <h3>Node.js multi-stage build</h3>
+          <pre><code>FROM node:22-slim AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+FROM node:22-slim AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM nginx:1.27-alpine AS runtime
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80</code></pre>
+
+          <div class="callout warn" style="margin-top:18px">
+            <strong>Multi-stage нужен, когда сборка и запуск требуют разного окружения.</strong>
+            Например, для сборки нужны компиляторы и dev-зависимости, а в финальном образе они не нужны.
+          </div>
+        </section>
+
+        <section id="commands">
+          <h2>7. Docker CLI: команды для backend-разработчика</h2>
+          <p>Dockerfile сам по себе ничего не запускает. Ты сначала собираешь образ командой <code>docker build</code>, потом запускаешь контейнер через <code>docker run</code>, потом смотришь логи, заходишь внутрь контейнера и проверяешь сеть, порты, переменные и файловую систему.</p>
+
+          <h3>Минимальный цикл</h3>
+          <pre><code># 1. Собрать образ из Dockerfile в текущей папке
+docker build -t my-api:dev .
+
+# 2. Запустить контейнер и пробросить порт
+docker run --rm --name my-api -p 8000:8000 my-api:dev
+
+# 3. Проверить приложение с хоста
+curl http://localhost:8000/health
+
+# 4. Посмотреть запущенные контейнеры
+docker ps
+
+# 5. Посмотреть логи
+docker logs -f my-api</code></pre>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Команда</th>
+                  <th>Когда нужна</th>
+                  <th>Что важно понимать</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>docker build -t my-api:dev .</code></td>
+                  <td>Собрать образ из текущей директории.</td>
+                  <td><code>.</code> в конце означает build context: какие файлы Docker видит при сборке.</td>
+                </tr>
+                <tr>
+                  <td><code>docker build --no-cache -t my-api:dev .</code></td>
+                  <td>Пересобрать без кэша.</td>
+                  <td>Полезно, когда подозреваешь, что Docker взял старый слой.</td>
+                </tr>
+                <tr>
+                  <td><code>docker run --rm -p 8000:8000 my-api:dev</code></td>
+                  <td>Запустить контейнер.</td>
+                  <td><code>--rm</code> удалит контейнер после остановки. <code>-p host:container</code> публикует порт.</td>
+                </tr>
+                <tr>
+                  <td><code>docker run -d --name my-api -p 8000:8000 my-api:dev</code></td>
+                  <td>Запустить в фоне.</td>
+                  <td><code>-d</code> detached mode. После этого смотри логи через <code>docker logs</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>docker run --env-file .env my-api:dev</code></td>
+                  <td>Передать переменные окружения.</td>
+                  <td>Секреты лучше передавать при запуске, а не вшивать в образ.</td>
+                </tr>
+                <tr>
+                  <td><code>docker exec -it my-api sh</code></td>
+                  <td>Зайти внутрь работающего контейнера.</td>
+                  <td>В slim/alpine образах часто есть <code>sh</code>, а не <code>bash</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>docker inspect my-api</code></td>
+                  <td>Посмотреть низкоуровневые настройки.</td>
+                  <td>Сети, IP, mounts, env, healthcheck, команда запуска.</td>
+                </tr>
+                <tr>
+                  <td><code>docker stop my-api</code></td>
+                  <td>Остановить контейнер.</td>
+                  <td>Если контейнер запущен с <code>--rm</code>, после остановки он исчезнет.</td>
+                </tr>
+                <tr>
+                  <td><code>docker rm my-api</code></td>
+                  <td>Удалить остановленный контейнер.</td>
+                  <td>Удаляется контейнер, не образ.</td>
+                </tr>
+                <tr>
+                  <td><code>docker rmi my-api:dev</code></td>
+                  <td>Удалить образ.</td>
+                  <td>Если от него есть контейнеры, сначала удали контейнеры.</td>
+                </tr>
+                <tr>
+                  <td><code>docker system df</code></td>
+                  <td>Понять, что занимает место.</td>
+                  <td>Показывает размер образов, контейнеров, volume и build cache.</td>
+                </tr>
+                <tr>
+                  <td><code>docker system prune</code></td>
+                  <td>Почистить мусор.</td>
+                  <td>Удаляет неиспользуемые контейнеры, сети, dangling images и кэш. Смотри, что подтверждаешь.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Диагностика контейнера</h3>
+          <div class="grid two">
+            <div class="card">
+              <h3>Проверить env и файлы</h3>
+              <pre><code>docker exec -it my-api sh
+printenv
+pwd
+ls -la
+cat /etc/os-release</code></pre>
+            </div>
+            <div class="card">
+              <h3>Проверить порт и процесс</h3>
+              <pre><code>docker port my-api
+docker logs --tail=100 my-api
+docker top my-api
+docker stats my-api</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="volumes-networks">
+          <h2>8. Docker volumes и networks</h2>
+          <p>Контейнеры временные: их можно удалить и создать заново. Поэтому данные базы, загруженные файлы и кеши хранят в volumes. А связь между контейнерами делают через Docker networks, где сервисы находят друг друга по имени.</p>
+
+          <div class="grid two">
+            <article class="card">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path></svg>
+              </div>
+              <h3>Volume</h3>
+              <p>Постоянное хранилище, которым управляет Docker. Лучший вариант для PostgreSQL, Redis data, user uploads и всего, что должно пережить пересоздание контейнера.</p>
+              <pre><code>docker volume create pg_data
+docker run -v pg_data:/var/lib/postgresql/data postgres:16</code></pre>
+            </article>
+
+            <article class="card">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="6" r="3"></circle><circle cx="18" cy="18" r="3"></circle><path d="M8.6 10.6 15.4 7.4"></path><path d="M8.6 13.4 15.4 16.6"></path></svg>
+              </div>
+              <h3>Network</h3>
+              <p>Изолированная сеть для контейнеров. В одной сети контейнеры обращаются друг к другу по имени контейнера или имени сервиса в Compose.</p>
+              <pre><code>docker network create backend
+docker run --network backend --name db postgres:16
+docker run --network backend --name api my-api:dev</code></pre>
+            </article>
+          </div>
+
+          <h3>Bind mount vs named volume</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Тип</th>
+                  <th>Пример</th>
+                  <th>Когда использовать</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Bind mount</td>
+                  <td><code>-v "$PWD":/app</code></td>
+                  <td>Разработка: код с хоста сразу виден внутри контейнера.</td>
+                </tr>
+                <tr>
+                  <td>Named volume</td>
+                  <td><code>-v pg_data:/var/lib/postgresql/data</code></td>
+                  <td>Данные сервисов: база, storage, кеши, uploads.</td>
+                </tr>
+                <tr>
+                  <td>Anonymous volume</td>
+                  <td><code>-v /data</code></td>
+                  <td>Редко. Docker сам создает volume без удобного имени.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Команды для volumes и networks</h3>
+          <div class="grid two">
+            <div class="card">
+              <h3>Volumes</h3>
+              <pre><code>docker volume ls
+docker volume inspect pg_data
+docker volume rm pg_data
+docker volume prune</code></pre>
+            </div>
+            <div class="card">
+              <h3>Networks</h3>
+              <pre><code>docker network ls
+docker network inspect backend
+docker network connect backend my-api
+docker network disconnect backend my-api</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="compose">
+          <h2>9. Docker Compose: связь нескольких сервисов</h2>
+          <p>Docker Compose нужен, когда приложение состоит из нескольких контейнеров. Для backend это обычно API, база данных, Redis, worker, scheduler и иногда nginx. Compose поднимает их одной командой и создает общую сеть.</p>
+
+          <div class="flow" aria-label="Связь сервисов Compose">
+            <div class="step"><strong>client</strong><small>браузер или curl</small></div>
+            <div class="step"><strong>api:8000</strong><small>FastAPI контейнер</small></div>
+            <div class="step"><strong>db:5432</strong><small>PostgreSQL по имени db</small></div>
+            <div class="step"><strong>redis:6379</strong><small>кеш или broker</small></div>
+            <div class="step"><strong>worker</strong><small>фоновые задачи</small></div>
+          </div>
+
+          <div class="callout good" style="margin-top:18px">
+            <strong>Ключевая идея:</strong>
+            <p style="margin-top:8px">Внутри Compose контейнеры обращаются друг к другу по имени сервиса. Не <code>localhost</code>, а <code>db</code>, <code>redis</code>, <code>api</code>. <code>localhost</code> внутри контейнера означает сам этот контейнер.</p>
+          </div>
+
+          <pre><code>services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:</code></pre>
+
+          <div class="pill-row">
+            <span class="pill">services</span>
+            <span class="pill">volumes</span>
+            <span class="pill">networks</span>
+            <span class="pill">env_file</span>
+            <span class="pill">healthcheck</span>
+            <span class="pill">depends_on</span>
+          </div>
+        </section>
+
+        <section id="compose-syntax">
+          <h2>10. Синтаксис docker-compose.yml</h2>
+          <p>Compose-файл пишется в YAML. Отступы важны: обычно два пробела. Верхний уровень чаще всего содержит <code>services</code>, <code>volumes</code>, <code>networks</code>, иногда <code>configs</code> и <code>secrets</code>.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ключ</th>
+                  <th>Что делает</th>
+                  <th>Пример</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>services</code></td><td>Список контейнеров проекта.</td><td><code>api</code>, <code>db</code>, <code>redis</code></td></tr>
+                <tr><td><code>image</code></td><td>Использовать готовый образ.</td><td><code>image: postgres:16-alpine</code></td></tr>
+                <tr><td><code>build</code></td><td>Собрать образ из Dockerfile.</td><td><code>build: .</code></td></tr>
+                <tr><td><code>container_name</code></td><td>Задать имя контейнера.</td><td><code>container_name: my-api</code></td></tr>
+                <tr><td><code>command</code></td><td>Переопределить <code>CMD</code> из Dockerfile.</td><td><code>command: uvicorn main:app --reload</code></td></tr>
+                <tr><td><code>ports</code></td><td>Пробросить порт наружу на хост.</td><td><code>"8000:8000"</code></td></tr>
+                <tr><td><code>expose</code></td><td>Открыть порт только внутри docker-сети.</td><td><code>expose: ["8000"]</code></td></tr>
+                <tr><td><code>environment</code></td><td>Переменные окружения прямо в YAML.</td><td><code>DATABASE_URL: postgresql://...</code></td></tr>
+                <tr><td><code>env_file</code></td><td>Загрузить переменные из файла.</td><td><code>env_file: [.env]</code></td></tr>
+                <tr><td><code>volumes</code></td><td>Подключить bind mount или named volume.</td><td><code>./app:/app</code>, <code>pg_data:/data</code></td></tr>
+                <tr><td><code>networks</code></td><td>Подключить сервис к сети.</td><td><code>networks: [backend]</code></td></tr>
+                <tr><td><code>depends_on</code></td><td>Задать порядок старта сервисов.</td><td><code>condition: service_healthy</code></td></tr>
+                <tr><td><code>healthcheck</code></td><td>Проверять состояние сервиса.</td><td><code>pg_isready</code>, <code>curl /health</code></td></tr>
+                <tr><td><code>restart</code></td><td>Политика рестарта.</td><td><code>restart: unless-stopped</code></td></tr>
+                <tr><td><code>profiles</code></td><td>Включать сервисы только по профилю.</td><td><code>profiles: ["dev"]</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Полный пример для backend: API + Postgres + Redis + worker</h3>
+          <pre><code>services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - backend
+
+  worker:
+    build: .
+    command: python -m app.worker
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge</code></pre>
+
+          <h3>DATABASE_URL внутри Compose</h3>
+          <p>Если приложение запускается на хосте, база может быть <code>localhost:5432</code>. Но если приложение внутри Compose, база должна быть по имени сервиса:</p>
+          <pre><code>DATABASE_URL=postgresql+asyncpg://app:app@db:5432/app
+REDIS_URL=redis://redis:6379/0</code></pre>
+        </section>
+
+        <section id="compose-commands">
+          <h2>11. Docker Compose CLI: запуск, проверка, отладка</h2>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Команда</th>
+                  <th>Что делает</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>docker compose up</code></td><td>Поднять все сервисы в foreground, логи видны сразу.</td></tr>
+                <tr><td><code>docker compose up -d</code></td><td>Поднять сервисы в фоне.</td></tr>
+                <tr><td><code>docker compose up --build</code></td><td>Пересобрать образы и поднять сервисы.</td></tr>
+                <tr><td><code>docker compose down</code></td><td>Остановить и удалить контейнеры и сеть проекта.</td></tr>
+                <tr><td><code>docker compose down -v</code></td><td>Остановить проект и удалить volumes. Осторожно: данные БД исчезнут.</td></tr>
+                <tr><td><code>docker compose ps</code></td><td>Посмотреть состояние сервисов.</td></tr>
+                <tr><td><code>docker compose logs -f api</code></td><td>Смотреть логи конкретного сервиса.</td></tr>
+                <tr><td><code>docker compose exec api sh</code></td><td>Зайти внутрь запущенного сервиса.</td></tr>
+                <tr><td><code>docker compose run --rm api python -m pytest</code></td><td>Запустить одноразовую команду в новом контейнере.</td></tr>
+                <tr><td><code>docker compose restart api</code></td><td>Перезапустить сервис.</td></tr>
+                <tr><td><code>docker compose config</code></td><td>Проверить итоговый YAML после env-подстановок.</td></tr>
+                <tr><td><code>docker compose pull</code></td><td>Скачать свежие версии образов из registry.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Типовой backend workflow</h3>
+          <pre><code># Первый запуск
+docker compose up --build
+
+# Запуск в фоне
+docker compose up -d
+
+# Логи API
+docker compose logs -f api
+
+# Миграции
+docker compose exec api alembic upgrade head
+
+# Тесты
+docker compose run --rm api pytest
+
+# Зайти внутрь API
+docker compose exec api sh
+
+# Полная остановка без удаления БД
+docker compose down
+
+# Полная остановка с удалением БД volume
+docker compose down -v</code></pre>
+        </section>
+
+        <section id="security">
+          <h2>12. Безопасность и production-подход</h2>
+
+          <div class="checklist">
+            <div class="check"><b>✓</b><div><p class="mini-title">Не запускайся от root</p><p class="muted">Создай пользователя и добавь <code>USER app</code>.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Не используй <code>:latest</code></p><p class="muted">Фиксируй версию: <code>python:3.12-slim</code>.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Не клади секреты в образ</p><p class="muted">Не пиши токены в <code>ENV</code> и <code>ARG</code>. Используй env на runtime.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Добавь <code>.dockerignore</code></p><p class="muted">Не копируй <code>.git</code>, venv, кеши, локальные БД.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Чисти кеш пакетов</p><p class="muted">Например, <code>pip install --no-cache-dir</code>.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Делай healthcheck</p><p class="muted">Контейнер может быть запущен, но приложение внутри уже сломалось.</p></div></div>
+          </div>
+
+          <h3>Пример <code>.dockerignore</code></h3>
+          <pre><code>.git
+.idea
+.venv
+__pycache__
+*.pyc
+.env
+app.db
+node_modules
+dist
+.DS_Store</code></pre>
+        </section>
+
+        <section id="checklist">
+          <h2>13. Финальный чеклист Dockerfile</h2>
+          <div class="checklist">
+            <div class="check"><b>✓</b><div><p class="mini-title">База конкретная</p><p class="muted">Не <code>latest</code>, а версия.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Кэш работает</p><p class="muted">Зависимости копируются и ставятся до копирования всего кода.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Образ не раздут</p><p class="muted">Нет venv, локальных файлов, кешей, лишних build tools.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Есть <code>.dockerignore</code></p><p class="muted">Контекст сборки маленький и чистый.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Команда запуска понятная</p><p class="muted"><code>CMD</code> или <code>ENTRYPOINT</code> записаны в exec form.</p></div></div>
+            <div class="check"><b>✓</b><div><p class="mini-title">Секреты не в образе</p><p class="muted">Пароли и токены приходят через переменные окружения на запуске.</p></div></div>
+          </div>
+
+          <div class="footer">
+            <strong>Короткая формула:</strong>
+            <p style="margin:8px 0 0">Dockerfile должен отвечать на четыре вопроса: от чего стартуем, куда кладем приложение, как ставим зависимости, какой командой запускаем процесс.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
