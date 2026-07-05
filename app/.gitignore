@@ -4,3 +4,9 @@ venv
 .idea
 idea
 *__pycache__
+.vscode
+
+.env
+*.db
+*.log
+.DS_Store

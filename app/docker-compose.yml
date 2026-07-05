@@ -1,0 +1,51 @@
+# docker-compose.yml описывает набор сервисов (контейнеров), которые
+# запускаются вместе и видят друг друга по имени сервиса в общей
+# docker-сети (compose создаёт её автоматически — "default").
+
+services:               # словарь всех сервисов проекта
+  api:                   # имя сервиса; внутри сети к нему можно обращаться как к хосту "api"
+    build: .             # собрать образ из Dockerfile, лежащего в текущей директории (.)
+    ports:
+      - "8020:8020"      # проброс порта "хост:контейнер" — снаружи (с твоей машины)
+                         # сервис доступен на localhost:8020, uvicorn внутри тоже слушает 8020
+    env_file:
+      - .env             # подгрузить переменные окружения из файла .env (JWT_*, COOKIE_* и т.п.)
+    environment:
+      # environment имеет приоритет над env_file — если ключ есть в обоих
+      # местах, побеждает значение отсюда. Специально задаём DATABASE_URL
+      # здесь, а не в .env, потому что внутри контейнера Postgres доступен
+      # по имени сервиса "db", а не "localhost" (в .env для локального
+      # запуска без Docker прописан localhost:5432 — это другой адрес).
+      DATABASE_URL: postgresql+asyncpg://app:app@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+        # "просто depends_on: db" только дожидается СТАРТА контейнера db,
+        # а condition: service_healthy заставляет api ждать, пока у db
+        # пройдёт healthcheck (см. ниже) — то есть Postgres реально готов
+        # принимать соединения, а не просто "процесс запущен".
+
+  db:                                # сервис базы данных, доступен другим сервисам как хост "db"
+    image: postgres:16-alpine        # готовый образ из Docker Hub (не собираем сами)
+    environment:
+      POSTGRES_DB: app               # имя базы, которая создастся при первом старте
+      POSTGRES_USER: app             # пользователь Postgres
+      POSTGRES_PASSWORD: app         # пароль пользователя (для прода — вынести в .env/секреты)
+    ports:
+      - "5432:5432"                  # проброс наружу нужен только для локальной отладки
+                                     # (например, подключиться DBeaver'ом или запускать api
+                                     # вне Docker с DATABASE_URL=...@localhost:5432/app);
+                                     # для связи api <-> db внутри compose это необязательно
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+        # именованный volume — данные Postgres хранятся вне контейнера,
+        # переживают `docker compose down` и пересборки образа
+    healthcheck:
+      # команда, которой Docker периодически проверяет "жив ли сервис"
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]  # pg_isready — утилита postgres, возвращает 0 если БД принимает коннекты
+      interval: 5s     # проверять каждые 5 секунд
+      timeout: 3s      # ждать ответа не дольше 3 секунд
+      retries: 10      # после 10 неудачных попыток подряд статус станет "unhealthy"
+
+volumes:                # объявление именованных volume верхнего уровня (нужно для 'postgres_data' выше)
+  postgres_data:         # Docker сам создаст и будет управлять этим volume

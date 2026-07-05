@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from core.db import Base
 import core.models  # noqa: F401  # Import side effects register ORM tables in Base.metadata
+from config import settings
 
 target_metadata = Base.metadata
 VERSIONS_DIR = Path(__file__).resolve().parent / "versions"
@@ -18,6 +19,10 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Держим alembic.ini синхронизированным с .env, чтобы `alembic` из CLI
+# не указывал на другую БД, чем приложение.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 
 def _next_revision_id() -> str:
@@ -68,7 +73,7 @@ def do_run_migrations(connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
-        render_as_batch=True,  # нужно для SQLite
+        render_as_batch=connection.dialect.name == "sqlite",  # batch mode нужен только для SQLite
         process_revision_directives=_assign_numeric_revision_id,
     )
 
